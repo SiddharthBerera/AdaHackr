@@ -43,7 +43,7 @@ while True:
     current_time = now.strftime("%H:%M")
 
     #get price next (time isn't as of the essence here since cmc noob api only updates price every min)
-    prices.append(json.loads(response.text)['BTC']['quote']['US['data']D']['price'])
+    prices.append(json.loads(response.text)['data']['BTC']['quote']['USD']['price'])
     
     #print price (testing purposes)
     print("Current Time =", current_time)
