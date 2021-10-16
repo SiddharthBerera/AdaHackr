@@ -1,0 +1,5 @@
+python time documentation
+python matplotlib documentation 
+python pandas documentation
+cmc-pro api documentation
+matplotlib finance documentation
