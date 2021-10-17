@@ -6,7 +6,6 @@ from datetime import datetime
 import csv
 from binance.client import Client
 from binance import ThreadedWebsocketManager
-from binance_api_keys import api_key, api_secret
 import websocket
 import numpy
 from binance.enums import *
@@ -17,7 +16,6 @@ trade = 'BTCBUSD'
 
 closes = []
 
-client = Client(api_key, api_secret)
 
 #initilise global variablz
 i=0
