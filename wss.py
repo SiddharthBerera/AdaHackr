@@ -23,6 +23,7 @@ client = Client(api_key, api_secret)
 i=0
 #in unix time stamp in milliseconds
 times = []
+date_and_time_now = []
 open_prices = []
 high_prices = []
 low_prices = []
@@ -79,8 +80,9 @@ def get_historical_data(start_time_unix_timestamp_ms, n_mins_historical_data):
     
     #subtract 1 as current min is being streamed in next function (wierd edge case issue)
     for j in range(0, len(bars)-1):
+        date_and_time1 = datetime.fromtimestamp(bars[j][0]/1000)
         info = {
-            "time": bars[j][0], 
+            "time": date_and_time1, 
             "open": bars[j][1], 
             "high": bars[j][2], 
             "low": bars[j][3],
@@ -104,7 +106,7 @@ def on_close(ws):
 
 def on_message(ws, message):
     #make these global so we can append to them
-    global times, open_prices, high_prices, low_prices, close_prices, i
+    global times, date_and_time_now, open_prices, high_prices, low_prices, close_prices, i
 
     print("recieved message")
     
@@ -117,6 +119,7 @@ def on_message(ws, message):
     if is_candle_closed:
         #start time for candlestick as unix timestamp in milliseconds
         times.append(candle['t'])
+        date_and_time_now.append(datetime.fromtimestamp(candle['t']/1000))
         #o,h,l,c prices
         open_prices.append(candle['o'])
         high_prices.append(candle['h'])
@@ -125,7 +128,7 @@ def on_message(ws, message):
 
         #create latest row in data frame
         info = {
-            "time": times[i], 
+            "time": date_and_time_now[i], 
             "open": open_prices[i], 
             "high": high_prices[i], 
             "low": low_prices[i],
