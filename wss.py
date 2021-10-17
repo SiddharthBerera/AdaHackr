@@ -36,15 +36,26 @@ def start():
     """
     beginning_of_min = False
     while beginning_of_min == False:
+        """
+        #seems to 0.1 ms +- the precise minute mark so we can take datetime.now() and truncate to just the seconds
+        #and calulate timestamp based on that (we want timestamp to match up with kline candlesticks which we are getting on 
+        the min to the precise min i.e. seconds with 0 d.p.)
+        """
         start_at = datetime.now()
         start_time_sec = start_at.strftime("%H:%M:%S")
         start_time_min = start_at.strftime("%H:%M")
         if start_time_sec[-2:] == '00':
             beginning_of_min = True 
- 
-    print("Starting at", start_time_sec)
-    # in hours, min and sec
-    return start_time_sec
+
+        #we will get time for min x and the first data will be for min x-1 since that candle will have just finished and
+        #kline provides all the data for that min
+    start_time_unix_timestamp_seconds = int(time.time())
+    print(start_at)
+    print(start_time_unix_timestamp_seconds)
+    start_time_unix_timestamp_ms = 1000*start_time_unix_timestamp_seconds
+    #start at is in hrs, mins, secs
+    print("Starting at", start_at)
+    return start_time_unix_timestamp_ms
     
 def create_latest_data():
     #create data_file
@@ -53,7 +64,13 @@ def create_latest_data():
         csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         csv_writer.writeheader()
 
-#def get_historical_data(time_period):
+def get_historical_data(start_time_unix_timestamp_ms):
+    #24 hours = 24*60*60*1000 ms
+    historic_start_ms = start_time_unix_timestamp_ms - 24*60*60*1000
+    bars = client.get_historical_klines('BTCUSDT', '1m', historic_start_ms, limit=1000)
+    print(len(bars))
+    print(start_time_unix_timestamp_ms)
+    print(historic_start_ms)
 
 def on_open(ws):
     print('opened connection')
@@ -78,7 +95,6 @@ def on_message(ws, message):
         times.append(candle['t'])
         #o,h,l,c prices
         open_prices.append(candle['o'])
-        print(type(open_prices[i]))
         high_prices.append(candle['h'])
         low_prices.append(candle['l'])
         close_prices.append(candle['c'])
@@ -100,8 +116,9 @@ def on_message(ws, message):
         i+=1
 
 def main():        
-    start_time_sec = start() 
-    #get_historical_data
+    start_time_unix_timestamp_ms = start() 
+    get_historical_data(start_time_unix_timestamp_ms)
+    print("yoooooooooooo")
     create_latest_data()       
     ws = websocket.WebSocketApp(socket, on_open=on_open, on_close=on_close, on_message=on_message)
     ws.run_forever()
