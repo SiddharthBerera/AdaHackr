@@ -28,6 +28,9 @@ high_prices = []
 low_prices = []
 close_prices = []
 
+#set n_mins as a paramter for now but should be user input
+n_mins_historical_data = 2
+
 def start():
     """
     start time
@@ -57,20 +60,41 @@ def start():
     print("Starting at", start_at)
     return start_time_unix_timestamp_ms
     
-def create_latest_data():
+def create_data_file():
     #create data_file
     fieldnames = ["time", "open", "high", "low", "close"]
+    #'w' modes overwrites wheres 'a' mode appends
+    #we want 'w' mode here in case file was already made so we overwrite not append to old data
     with open('data.csv', 'w') as csv_file:
         csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         csv_writer.writeheader()
 
-def get_historical_data(start_time_unix_timestamp_ms):
+def get_historical_data(start_time_unix_timestamp_ms, n_mins_historical_data):
     #24 hours = 24*60*60*1000 ms
-    historic_start_ms = start_time_unix_timestamp_ms - 24*60*60*1000
+
+    #we shift back historical data so we are doing 24 hours of data before the start of the min 
+    #coz we start caclculating on a min for the end of the min
+    historic_start_ms = start_time_unix_timestamp_ms - ((n_mins_historical_data+1)*60*1000)
     bars = client.get_historical_klines('BTCUSDT', '1m', historic_start_ms, limit=1000)
+    
+    #subtract 1 as current min is being streamed in next function (wierd edge case issue)
+    for j in range(0, len(bars)-1):
+        info = {
+            "time": bars[j][0], 
+            "open": bars[j][1], 
+            "high": bars[j][2], 
+            "low": bars[j][3],
+            "close": bars[j][4], 
+            }
+        fieldnames = ["time", "open", "high", "low", "close"]
+        #open file to write timestamp, open, close, high and low prices
+        with open('data.csv', 'a') as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            csv_writer.writerow(info)
     print(len(bars))
     print(start_time_unix_timestamp_ms)
     print(historic_start_ms)
+    print(int(time.time()))
 
 def on_open(ws):
     print('opened connection')
@@ -110,6 +134,7 @@ def on_message(ws, message):
 
         fieldnames = ["time", "open", "high", "low", "close"]
         #open file to write timestamp, open, close, high and low prices
+        #here we want to append
         with open('data.csv', 'a') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writerow(info)
@@ -117,10 +142,11 @@ def on_message(ws, message):
 
 def main():        
     start_time_unix_timestamp_ms = start() 
-    get_historical_data(start_time_unix_timestamp_ms)
-    print("yoooooooooooo")
-    create_latest_data()       
+    create_data_file() 
+    get_historical_data(start_time_unix_timestamp_ms, n_mins_historical_data)     
+    #next is basically function to add on new data being streamed  
     ws = websocket.WebSocketApp(socket, on_open=on_open, on_close=on_close, on_message=on_message)
+    #and this is basically just while True loop
     ws.run_forever()
 
 main()
