@@ -30,7 +30,7 @@ low_prices = []
 close_prices = []
 
 #set n_mins as a paramter for now but should be user input
-n_mins_historical_data = 2
+n_mins_historical_data = 30
 
 def start():
     """
